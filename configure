@@ -1,0 +1,55 @@
+#!/usr/bin/env sh
+set -e
+
+# See https://www.gnu.org/prep/standards/html_node/Directory-Variables.html
+prefix=/usr/local
+exec_prefix='$(PREFIX)'
+exec_suffix=
+bindir='$(EXEC_PREFIX)/bin'
+
+
+main() {
+    parseArgs "$@"
+    mangleMakefile
+}
+
+
+printHelp() {
+    echo ''
+    echo "Example usage:   $0 --prefix /usr/local"
+    echo ''
+    echo 'Options:'
+    echo '    --prefix <path>      Default "/usr/local"'
+    echo '    --exec-prefix <path> Default "$(PREFIX)"'
+    echo '    --exec-suffix <path> Default <empty>'
+    echo '    --bindir <path>      Default "$(EXEC_PREFIX)/bin"'
+    echo ''
+}
+
+
+parseArgs() {
+    # See: https://stackoverflow.com/a/14203146/4415884
+    while test $# -gt 0 ; do
+        case $1 in
+            --help)        printHelp; exit 1; ;;
+            --prefix)      prefix="$2"      shift; shift; ;;
+            --exec-prefix) exec_prefix="$2" shift; shift; ;;
+            --exec-suffix) exec_suffix="$2" shift; shift; ;;
+            --bindir)      bindir="$2"      shift; shift; ;;
+            *) echo "[ERROR] Unexpected argument: $1"; exit 1 ;;
+        esac
+    done
+}
+
+
+mangleMakefile() {
+    sed -i 's;^PREFIX=.*$;PREFIX='"$prefix"';' Makefile
+    sed -i 's;^EXEC_PREFIX=.*$;EXEC_PREFIX='"$exec_prefix"';' Makefile
+    sed -i 's;^EXEC_SUFFIX=.*$;EXEC_SUFFIX='"$exec_suffix"';' Makefile
+    sed -i 's;^BINDIR=.*$;BINDIR='"$bindir"';' Makefile
+}
+
+
+main "$@"
+
+

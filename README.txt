@@ -6,3 +6,5 @@ BulkLn
 
 Usage:  bulk-ln --help
 
+Build: "doc/INSTALL.txt"
+

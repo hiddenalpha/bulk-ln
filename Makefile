@@ -1,17 +1,21 @@
 
 CC=gcc
-LD=ld
-AR=ar
 TAR=tar
-BINEXT=
+MKDIRS=mkdir -p
 TOOLS=lxGcc64
+
+# See "./configure"
+PREFIX=/usr/local
+EXEC_PREFIX=$(PREFIX)
+EXEC_SUFFIX=
+BINDIR=$(EXEC_PREFIX)/bin
 
 ifndef PROJECT_VERSION
 	# We just provide a primitive version string so we can see which build
 	# we're using while debugging. For a release we will override the version
 	# by providing it from cli args to 'make' as in:
 	#     make clean package PROJECT_VERSION=1.2.3
-	PROJECT_VERSION=$(shell date +0.0.0-%Y%m%d.%H%M%S)
+	PROJECT_VERSION=$(shell date -u +0.0.0-%Y%m%d.%H%M%S)
 endif
 
 CFLAGS= --std=c99                                                             \
@@ -44,14 +48,14 @@ clean:
 	rm -rf build dist
 
 .PHONY: link
-link: build/bin/bulk-ln$(BINEXT)
+link: build/bin/bulk-ln$(EXEC_SUFFIX)
 
 build/obj/%.o: src/%.c
 	@echo "\n[INFO ] Compile '$@'"
 	@mkdir -p $(shell dirname build/obj/$*)
 	$(CC) -c -o $@ $< $(CFLAGS) $(INCDIRS)
 
-build/bin/bulk-ln$(BINEXT): \
+build/bin/bulk-ln$(EXEC_SUFFIX): \
 		build/obj/bulk_ln/bulk_ln.o \
 		build/obj/bulk_ln/bulk_ln_main.o
 	@echo "\n[INFO ] Link '$@'"
@@ -64,18 +68,24 @@ package: link
 	@rm -rf build/dist-* dist
 	@mkdir dist
 	@echo
-	@bash -c 'if [[ -n `git status --porcelain` ]]; then echo "[ERROR] Worktree not clean as it should be (see: git status)"; exit 1; fi'
+	@bash -c 'if [[ -n `git status --porcelain` ]]; then echo "[WARN ] Worktree not clean!"; sleep 3; fi'
 	@# Create Executable bundle.
 	@rm -rf build/dist-bin && mkdir -p build/dist-bin
 	@cp -t build/dist-bin \
 		README*
 	@mkdir build/dist-bin/bin
 	@cp -t build/dist-bin/bin \
-		build/bin/*$(BINEXT)
+		build/bin/*$(EXEC_SUFFIX)
 	@(cd build/dist-bin && find . -type f -not -name MD5SUM -exec md5sum -b {} \;) > build/MD5SUM
 	@mv build/MD5SUM build/dist-bin/.
 	@(cd build/dist-bin && $(TAR) --owner=0 --group=0 -czf ../../dist/BulkLn-$(PROJECT_VERSION)-$(TOOLS).tgz *)
 	@echo "\n[INFO ] DONE: Artifacts created and placed in 'dist'."
 	@echo
 	@echo See './dist/' for result.
+
+.PHONY: install
+install:
+	@$(MKDIRS) "$(BINDIR)"
+	$(TAR) -f "$(shell ls dist/BulkLn-*-$(TOOLS).tgz)" \
+		-C "$(BINDIR)" --strip-components=1 -x bin
 

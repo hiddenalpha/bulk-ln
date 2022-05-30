@@ -1,0 +1,14 @@
+
+How to build/install
+====================
+
+Use the well-known procedure:
+
+  ./configure
+  make
+  make install
+
+You can get some help with:
+
+  ./configure --help
+
