@@ -1,24 +1,21 @@
 
-/* Header for this file */
+/* This */
 #include "bulk_ln.h"
  
 /* System */
 #include <assert.h>
 #include <errno.h>
-#include <stdbool.h> // TODO remove
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* Other packages from this project */
-/*#include ""*/
-
 
 #define DATA_FILE_FIELD_SEP_CHR '\t'
 
 
+typedef  char  bool;
 typedef  struct BulkLn  BulkLn;
 
 
@@ -30,6 +27,12 @@ struct BulkLn {
     char *dataFilePath;
 
     FILE *dataFd;
+
+    /** Count of links we created */
+    int createdLinksCount;
+
+    /** Count of direcrories we created */
+    int createdDirsCount;
 
     /** If a dry-run got requested */
     bool dryRun;
@@ -48,25 +51,20 @@ struct BulkLn {
     /** if true, we print a summary what we did at the end of the run to stderr */
     bool isPrintSummary;
 
-    /** if true, we will override existing files. This will be on for example
-     * if --force got specified. */
+    /** if true, we will override existing files. This will be enabled for
+     * example if --force got specified. */
     bool isRelinkExistingFiles;
-
-    /** Count of links we created */
-    int createdLinksCount;
-
-    /** Count of direcrories we created */
-    int createdDirsCount;
 };
 
 
 
-void printHelp(){
+static void printHelp(){
     printf("\n   %s%s\n", strrchr(__FILE__, '/') + 1, " @ " STR_QUOT(PROJECT_VERSION) "\n"
         "\n"
         "Utility to create links. Writing a custom implementation of 'ln' got necessary\n"
         "as we found no way to instruct 'ln' to create a few thousand links in an\n"
-        "acceptable amount of time. So we just wrote our own ;)\n"
+        "acceptable amount of time. So we just re-invented that wheel so it better fits\n"
+        "our use-case ;)\n"
         "\n"
         "Takes paths (pairwise) from stdin (see --stdin for details) and creates a\n"
         "hardlink for each pair from the 1st path to the 2nd.\n"
@@ -95,9 +93,7 @@ void printHelp(){
         "\n"
         "    --dry-run\n"
         "        Will print the actions to stdout instead executing them.\n"
-        "        HINT: The directory count in the summary will be implicitly set to\n"
-        "        zero, as our used counting strategy would deliver wrong results when we\n"
-        "        not actually creating the dirs.\n"
+        "        HINT: Directory count in summary will be inaccurate in this mode.\n"
         "\n"
         "    --force\n"
         "        Same meaning as in original 'ln' command.\n"
@@ -107,7 +103,7 @@ void printHelp(){
 
 /** returns non-zero on errors. Error messages will already be printed
  * internally. */
-int parseArgs( int argc, char**argv, BulkLn*bulkLn ){
+static int parseArgs( int argc, char**argv, BulkLn*bulkLn ){
     /* init (aka set defaults) */
     bulkLn->dataFilePath = NULL;
     bulkLn->dryRun = 0;
@@ -118,7 +114,7 @@ int parseArgs( int argc, char**argv, BulkLn*bulkLn ){
     bulkLn->isRelinkExistingFiles = 0;
 
     // Parse args
-    for( int i=1 ; i<argc ; ++i ) {
+    for( int i = 1 ; i < argc ; ++i ){
         char *arg = argv[i];
         if( !strcmp(arg, "--help") ){
             printHelp();
@@ -131,8 +127,8 @@ int parseArgs( int argc, char**argv, BulkLn*bulkLn ){
             bulkLn->isRelinkExistingFiles = !0;
         }
         else if( !strcmp(arg, "--quiet") ){
-            bulkLn->isPrintStatus = false;
-            bulkLn->isPrintSummary = false;
+            bulkLn->isPrintStatus = 0;
+            bulkLn->isPrintSummary = 0;
         }
         else if( !strcmp(arg, "--stdin") ){
             bulkLn->dataFilePath = "-";
@@ -216,6 +212,12 @@ static int mkdirs( char*path, BulkLn*bulkLn ){
                  * the dir. Eg if it did NOT already exist */
                 bulkLn->createdDirsCount += 1;
             }
+        }else{
+            /* We cannot really count how many dirs we created. Because maybe
+             * we are (hypothetically) creating this directory the 100th time
+             * now. But we have no way to tell as we do not really create em.
+             * So just increment to have some value at all */
+            bulkLn->createdDirsCount += 1;
         }
 
         if( tmpEnd == pathEnd ){
@@ -240,7 +242,7 @@ static int createHardlink( char*srcPath, char*dstPath, BulkLn*bulkLn ){
     int err;
 
     if( bulkLn->dryRun || bulkLn->isPrintEachCreateLink ){
-        printf("link('%s', '%s')\n", srcPath, dstPath);
+        printf("link(\"%s\", \"%s\")\n", srcPath, dstPath);
     }
 
     if( ! bulkLn->dryRun ){
@@ -262,7 +264,7 @@ static int createHardlink( char*srcPath, char*dstPath, BulkLn*bulkLn ){
         }
         err = link(srcPath, dstPath);
         if( err ){
-            fprintf(stderr, "link('%s', '%s'): %s\n", srcPath, dstPath, strerror(errno));
+            fprintf(stderr, "link(\"%s\", \"%s\"): %s\n", srcPath, dstPath, strerror(errno));
             err = -1; goto finally;
         }
     }
@@ -293,7 +295,7 @@ static int onPathPair( char*srcPath, char*dstPath, BulkLn*bulkLn ){
         tmpEnd[0] = '\0';
         /* Create missing parent dirs */
         err = mkdirs(dstPath, bulkLn);
-        if (err) { err = -1; goto finally; }
+        if( err ){ err = -1; goto finally; }
         /* Restore path */
         tmpEnd[0] = '/';
     }
@@ -350,7 +352,7 @@ static int parseDataFileAsPairPerLine( BulkLn*bulkLn ){
         char *dstPath = tab + 1; /* <- path starts one char after the separator */
         char *dstPath_end = buf + buf_len;
         for(;; --dstPath_end ){
-            if( dstPath_end < buf ){
+            if(unlikely( dstPath_end < buf )){
                 fprintf(stderr, "IMHO cannot happen (@%s:%d)\n", __FILE__, __LINE__);
                 err = -1; goto finally;
             }
@@ -388,7 +390,6 @@ int bulk_ln_main( int argc, char**argv ){
     BulkLn bulkLn = {0};
     #define bulkLn (&bulkLn)
 
-    /* parse args */
     err = parseArgs(argc, argv, bulkLn);
     if( err ){ err = -1; goto finally; }
 
@@ -414,7 +415,7 @@ int bulk_ln_main( int argc, char**argv ){
     err = 0;
     finally:
     if( bulkLn->dataFd != NULL && bulkLn->dataFd != stdin ){
-        fclose(bulkLn->dataFd); bulkLn->dataFd = NULL;
+        fclose(bulkLn->dataFd);
     }
     return err;
     #undef bulkLn
