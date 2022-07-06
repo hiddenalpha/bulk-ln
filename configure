@@ -1,6 +1,6 @@
 
 set -e
-set -o posix
+if test -n "$BASH_VERSION"; then set -o posix; fi
 
 # See https://www.gnu.org/prep/standards/html_node/Directory-Variables.html
 prefix=/usr/local
@@ -70,6 +70,9 @@ printMakefile () {
     # If fails (eg git not avail), create pseudo version using date.
     printf '%s'   'PROJECT_VERSION=$(shell'
     printf '%s'   ' ret=$$(git describe --tags 2>/dev/null |sed -E "s;^v;;");'
+    printf '%s'   ' if test -n "$$ret" -a -n "$$(git status --porcelain 2>/dev/null)"; then'
+    printf '%s'       ' ret="$$ret+dirt";'
+    printf '%s'   ' fi;'
     printf '%s'   ' if test -z "$$ret"; then ret=$$(date -u +0.0.0-%Y%m%d.%H%M%S); fi;'
     printf '%s\n' ' echo "$$ret")'
 
@@ -137,7 +140,7 @@ printMakefile () {
     printf '%s\n' '	$(MKDIRS) dist'
                   # Create Executable bundle.
     printf '%s\n' '	$(MKDIRS) build/dist-bin && $(COPYTO) build/dist-bin \'
-    printf '%s\n' '		README.txt'
+    printf '%s\n' '		README*'
     printf '%s\n' '	$(MKDIRS) build/dist-bin/bin && $(COPYTO) build/dist-bin/bin \'
     printf '%s\n' '		build/bin/*'
 
