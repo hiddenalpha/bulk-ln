@@ -8,7 +8,10 @@ create many links.
 
 ## How to build / install
 
-Minimal way is to do:
+If you prefer to build within more isolated environment may
+"contrib/build-using-docker/README.md" could be interesting for you.
+
+If you prefer traditional, just do:
 
 ```sh
     curl -sSL http://git.hiddenalpha.ch/bulk-ln.git/snapshot/bulk-ln-master.tar.gz | tar xz
@@ -17,13 +20,4 @@ Minimal way is to do:
     make
     make install
 ```
-
-As usual, configure provides some help:
-
-```sh
-    ./configure --help
-```
-
-Its worth browsing the "contrib/" directory. It contains potentially useful
-scripts for building.
 
