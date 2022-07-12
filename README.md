@@ -14,10 +14,10 @@ If you prefer to build within more isolated environment may
 If you prefer traditional, just do:
 
 ```sh
-    curl -sSL http://git.hiddenalpha.ch/bulk-ln.git/snapshot/bulk-ln-master.tar.gz | tar xz
-    cd bulk-ln-master
-    ./configure
-    make
-    make install
+curl -sSL http://git.hiddenalpha.ch/bulk-ln.git/snapshot/bulk-ln-master.tar.gz | tar xz
+cd bulk-ln-master
+./configure
+make
+make install
 ```
 

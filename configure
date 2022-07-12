@@ -64,6 +64,7 @@ printMakefile () {
     printf '%s\n' "EXEC_PREFIX=$exec_prefix"
     printf '%s\n' "EXEC_SUFFIX=$exec_suffix"
     printf '%s\n' "BINDIR=$bindir"
+    printf '%s\n' "NDEBUG=1"
 
     # If PROJECT_VERSION set, use it.
     # If not, try generate via git describe.
