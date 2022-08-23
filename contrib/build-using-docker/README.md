@@ -24,7 +24,7 @@ curl -sSL http://git.hiddenalpha.ch/bulk-ln.git/plain/contrib/build-using-docker
 ## Grab distribution archive
 
 Most probably we wanna get the distribution archive. We can copy it out the
-dockerimage to our host using:
+dockerimage into our working dir on the host using:
 
 ```sh
 sudo docker run --rm -i "${IMG:?}" sh -c 'true && cd dist && tar c *' | tar x
@@ -51,10 +51,10 @@ differently if you need to keep multiple images.
 curl -sSL http://git.hiddenalpha.ch/bulk-ln.git/plain/contrib/build-using-docker/Dockerfile | sudo docker build . -f - -t "${IMG:?}" \
     --build-arg PARENT_IMAGE=debian:buster-20220622-slim \
     --build-arg PKGS_TO_ADD="curl gcc git make libc-dev ca-certificates tar" \
-    --build-arg PKGS_TO_DEL="curl gcc git make libc-dev ca-certificates" \
+    --build-arg PKGS_TO_DEL="curl gcc git make libc-dev" \
     --build-arg PKGINIT="apt update" \
     --build-arg PKGADD="apt install -y --no-install-recommends" \
-    --build-arg PKGDEL=true \
+    --build-arg PKGDEL="apt purge -y" \
     --build-arg PKGCLEAN="apt clean"
 ```
 

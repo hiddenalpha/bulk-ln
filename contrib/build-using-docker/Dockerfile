@@ -2,7 +2,7 @@
 ARG PARENT_IMAGE=alpine:3.16.0
 FROM $PARENT_IMAGE
 
-ARG GIT_TAG=
+ARG GIT_TAG=master
 ARG CONFIGURE_OPTS=
 ARG PKGINIT=true
 ARG PKGADD="apk add"
@@ -16,7 +16,7 @@ WORKDIR /work
 RUN true \
     && $PKGINIT \
     && $PKGADD $PKGS_TO_ADD \
-    && git clone --depth 1 https://github.com/hiddenalpha/bulk-ln.git . \
+    && git clone --depth 42 --branch "${GIT_TAG:?}" https://github.com/hiddenalpha/bulk-ln.git . \
     && git config advice.detachedHead false \
     && if test -n "$GIT_TAG"; then git checkout "$GIT_TAG"; fi \
     && ./configure $CONFIGURE_OPTS \
