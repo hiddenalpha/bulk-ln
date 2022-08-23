@@ -191,7 +191,7 @@ static int mkdirs( char*path, BulkLn*bulkLn ){
 
         /* Print if requested */
         if( bulkLn->dryRun || bulkLn->isPrintEachMkdir ){
-            printf("mkdir(%s)\n", path);
+            printf("mkdir(\"%s\")\n", path);
         }
 
         /* Create dir up to that found path */
@@ -204,7 +204,7 @@ static int mkdirs( char*path, BulkLn*bulkLn ){
                 if( errno == EEXIST ){
                     // Fine :) So just continue with the next one.
                 }else{
-                    fprintf(stderr, "mkdir(%s): %s\n", path, strerror(errno));
+                    fprintf(stderr, "mkdir(\"%s\"): %s\n", path, strerror(errno));
                     err = -1; goto finally;
                 }
             }else{
@@ -339,13 +339,13 @@ static int parseDataFileAsPairPerLine( BulkLn*bulkLn ){
         char *srcPath = buf;
         char *tab = memchr(buf, DATA_FILE_FIELD_SEP_CHR, buf_len);
         if( tab == NULL ){
-            fprintf(stderr, "Too few field separators (tab) in '%s' @ %lu",
+            fprintf(stderr, "Too few field separators (tab) in '%s' @ %lu\n",
                     bulkLn->dataFilePath, lineNum);
             err = -1; goto finally;
         }
         char *unwantedTab = memchr(tab + 1, DATA_FILE_FIELD_SEP_CHR, tab + 1 - buf);
         if( unwantedTab != NULL ){
-            fprintf(stderr, "Too many field separators (tab) in '%s' @ %lu",
+            fprintf(stderr, "Too many field separators (tab) in '%s' @ %lu\n",
                     bulkLn->dataFilePath, lineNum);
             err = -1; goto finally;
         }
@@ -375,7 +375,7 @@ static int parseDataFileAsPairPerLine( BulkLn*bulkLn ){
     }
 
     if( bulkLn->isPrintStatus ){
-        fprintf(stderr, "Parsed %lu records from '%s'\n", lineNum, bulkLn->dataFilePath);
+        fprintf(stderr, "Parsed %lu records from '%s'\n", lineNum - 1, bulkLn->dataFilePath);
     }
 
     err = 0;
@@ -399,7 +399,7 @@ int bulk_ln_main( int argc, char**argv ){
     }else{
         bulkLn->dataFd = fopen(bulkLn->dataFilePath, "rb");
         if( bulkLn->dataFd == NULL ){
-            fprintf(stderr, "fopen(%s): %s", bulkLn->dataFilePath, strerror(errno));
+            fprintf(stderr, "fopen(%s): %s\n", bulkLn->dataFilePath, strerror(errno));
             err = -1; goto finally;
         }
     }
