@@ -9,7 +9,8 @@ create many links.
 ## How to build / install
 
 If you prefer to build within more isolated environment may
-"contrib/build-using-docker/README.md" could be interesting for you.
+[contrib/build-using-docker/](contrib/build-using-docker/README.md)
+could be interesting for you.
 
 If you prefer traditional, just do:
 
