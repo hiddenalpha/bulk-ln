@@ -18,7 +18,7 @@ RUN true \
     && $PKGADD $PKGS_TO_ADD \
     && git clone --depth 42 --branch "${GIT_TAG:?}" https://github.com/hiddenalpha/bulk-ln.git . \
     && git config advice.detachedHead false \
-    && if test -n "$GIT_TAG"; then git checkout "$GIT_TAG"; fi \
+    && git checkout "$GIT_TAG" \
     && ./configure $CONFIGURE_OPTS \
     && make clean && make && make install \
     && find . -not -wholename './dist*' -delete \

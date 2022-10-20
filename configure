@@ -83,7 +83,8 @@ printMakefile () {
     printf '%s'   ' -Wno-error=unused-function -Wno-error=unused-label'
     printf '%s'   ' -Wno-error=unused-variable -Wno-error=unused-parameter'
     printf '%s'   ' -Wno-error=unused-const-variable'
-    printf '%s'   ' -Werror=implicit-fallthrough=1'
+    # Not supported by debian 9 and older
+    #printf '%s'   ' -Werror=implicit-fallthrough=1'
     printf '%s'   ' -Wno-error=unused-but-set-variable'
     printf '%s'   ' -Wno-unused-function -Wno-unused-parameter'
     printf '%s\n' ' -DPROJECT_VERSION=$(PROJECT_VERSION)'
