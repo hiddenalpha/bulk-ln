@@ -1,7 +1,7 @@
 
 /* This */
 #include "bulk_ln.h"
- 
+
 /* System */
 #include <assert.h>
 #include <errno.h>
@@ -59,45 +59,52 @@ struct BulkLn {
 
 
 static void printHelp(){
-    printf("\n   %s%s\n", strrchr(__FILE__, '/') + 1, " @ " STR_QUOT(PROJECT_VERSION) "\n"
-        "\n"
-        "Utility to create links. Writing a custom implementation of 'ln' got necessary\n"
-        "as we found no way to instruct 'ln' to create a few thousand links in an\n"
-        "acceptable amount of time. So we just re-invented that wheel so it better fits\n"
-        "our use-case ;)\n"
-        "\n"
-        "Takes paths (pairwise) from stdin (see --stdin for details) and creates a\n"
-        "hardlink for each pair from the 1st path to the 2nd.\n"
-        "\n"
-        "Options:\n"
-        "\n"
+    printf("  \n   %s%s\n", strrchr(__FILE__, '/') + 1, " @ " STR_QUOT(PROJECT_VERSION) "\n"
+        "  \n"
+        "  Takes paths (pairwise) from stdin (see --stdin for details) and\n"
+        "  creates a hardlink for each pair from the 1st path to the 2nd.\n"
+        "  \n"
+        "  Writing a custom implementation of 'ln' got necessary as we found no\n"
+        "  way to instruct 'ln' to create a few thousand links in an acceptable\n"
+        "  amount of time. Remind that wheels that do not fit should be\n"
+        "  re-invented (yes, no matter how much they already exist!). So now we\n"
+        "  have it. Our re-invented wheel that finally fits our use-case ;) \n"
+        "  \n"
+        "  See also\n"
+        "  https://pubs.opengroup.org/onlinepubs/009695399/utilities/ln.html\n"
+        "  for info about the original 'ln'.\n"
+        "  \n"
+        "  Options:\n"
+        "  \n"
         "    --stdin\n"
         "        Read the path pairs to link from stdin. The format is like:\n"
-        "\n"
+        "  \n"
         "          <src-path> <tab> <dst-path> <newline>\n"
-        "\n"
+        "  \n"
         "        Example:\n"
-        "\n"
+        "  \n"
         "          origin/foo.txt\tnew/gugg.txt\n"
         "          origin/bar.txt\tnew/da.txt\n"
-        "\n"
+        "  \n"
         "        HINT: Preferred <newline> is LF. But CRLF should work too.\n"
-        "\n"
+        "  \n"
         "    --quiet\n"
-        "        Don't print status or similar stuff. Errors will still be printed to\n"
-        "        stderr.\n"
-        "\n"
+        "        Don't print status or similar stuff. Errors will still be\n"
+        "        printed to stderr.\n"
+        "  \n"
         "    --verbose\n"
-        "        Print stupid amount of logs. Usually only helpful for debugging. Should\n"
-        "        NOT be combined with --quiet as this would be nonsense anyway.\n"
-        "\n"
+        "        Print stupid amount of logs. Usually only helpful for debugging.\n"
+        "        Should NOT be combined with --quiet as this would be nonsense\n"
+        "        anyway.\n"
+        "  \n"
         "    --dry-run\n"
         "        Will print the actions to stdout instead executing them.\n"
-        "        HINT: Directory count in summary will be inaccurate in this mode.\n"
-        "\n"
+        "        HINT: Directory count in summary will be inaccurate in this\n"
+        "        mode.\n"
+        "  \n"
         "    --force\n"
         "        Same meaning as in original 'ln' command.\n"
-        "\n");
+        "  \n");
 }
 
 
@@ -140,7 +147,7 @@ static int parseArgs( int argc, char**argv, BulkLn*bulkLn ){
             bulkLn->isPrintEachMkdir = !0;
         }
         else{
-            fprintf(stderr, "Unknown arg '%s'.\n", arg);
+            fprintf(stderr, "EINVAL: '%s'\n", arg);
             return -1;
         }
     }
@@ -150,7 +157,7 @@ static int parseArgs( int argc, char**argv, BulkLn*bulkLn ){
      * accidentally) invokes the utility wihout args. Further this also makes
      * the utility easier to extend wihout breaking everything. */
     if( bulkLn->dataFilePath == NULL ){
-        fprintf(stderr, "Arg '--stdin' missing. Try  --help\n");
+        fprintf(stderr, "EINVAL: '--stdin' missing.\n");
         return -1;
     }
 
@@ -232,7 +239,7 @@ static int mkdirs( char*path, BulkLn*bulkLn ){
     }
 
     err = 0;
-    finally:
+finally:
     return err;
 }
 
@@ -272,7 +279,7 @@ static int createHardlink( char*srcPath, char*dstPath, BulkLn*bulkLn ){
     bulkLn->createdLinksCount += 1;
 
     err = 0;
-    finally:
+finally:
     return err;
 }
 
@@ -304,7 +311,7 @@ static int onPathPair( char*srcPath, char*dstPath, BulkLn*bulkLn ){
     if( err ){ err = -1; goto finally; }
 
     err = 0;
-    finally:
+finally:
     return err;
 }
 
@@ -353,7 +360,7 @@ static int parseDataFileAsPairPerLine( BulkLn*bulkLn ){
         char *dstPath_end = buf + buf_len;
         for(;; --dstPath_end ){
             if(unlikely( dstPath_end < buf )){
-                fprintf(stderr, "IMHO cannot happen (@%s:%d)\n", __FILE__, __LINE__);
+                fprintf(stderr, "IMHO cannot happen  %s:%d\n", __FILE__, __LINE__);
                 err = -1; goto finally;
             }
             if( dstPath_end[0]=='\n' || dstPath_end[0]=='\0' || dstPath_end[0]=='\r' ){
@@ -379,7 +386,7 @@ static int parseDataFileAsPairPerLine( BulkLn*bulkLn ){
     }
 
     err = 0;
-    finally:
+finally:
     free(buf);
     return err;
 }
@@ -413,7 +420,7 @@ int bulk_ln_main( int argc, char**argv ){
     }
 
     err = 0;
-    finally:
+finally:
     if( bulkLn->dataFd != NULL && bulkLn->dataFd != stdin ){
         fclose(bulkLn->dataFd);
     }

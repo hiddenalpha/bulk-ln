@@ -1,0 +1,32 @@
+
+echo "WARN: read (AND UNDERSTAND) the README before running this script!"
+sleep 3
+exit 1
+
+
+true \
+  && GIT_TAG="master" \
+  && CONFIGURE_OPTS= \
+  && PKGS_TO_ADD="ca-certificates curl gcc git make libc-dev tar" \
+  && PKGS_TO_DEL="curl gcc git make libc-dev" \
+  && SUDO=sudo \
+  && PKGINIT="$SUDO apt update" \
+  && PKGADD="$SUDO apt install -y --no-install-recommends" \
+  && PKGDEL="$SUDO apt purge -y" \
+  && PKGCLEAN="$SUDO apt clean" \
+  && WORKDIR="${HOME:?}/work" \
+  && true \
+  && mkdir -p "${WORKDIR:?}" && cd "${WORKDIR:?}" \
+  && ${PKGINIT:?} && ${PKGADD:?} $PKGS_TO_ADD \
+  && git clone --depth 42 --branch "${GIT_TAG:?}" https://github.com/hiddenalpha/bulk-ln.git . \
+  && git config advice.detachedHead false \
+  && git checkout "${GIT_TAG:?}" \
+  && ./configure $CONFIGURE_OPTS \
+  && make clean && make -j$(nproc) \
+  && $SUDO make install \
+  && find . -not -wholename './dist*' -delete \
+  && ${PKGDEL:?} $PKGS_TO_DEL && ${PKGCLEAN:?} \
+  && dirOfDistBundle="$(realpath dist)" \
+  && printf '\n  SUCCESS  :)  Distribution bundle is ready in:\n\n  %s\n\n  Tip: Before pulling out your hair about how to get that archive out of\n       your qemu VM. STOP kluding around with silly tools and learn how\n       basic tools do the job perfectly fine:\n\n  ssh %s@localhost -p2222 -- sh -c '\''true && cd "%s" && tar c *'\'' | tar x\n\n  BTW: In addition bulk-ln got installed and is ready-to-use.\n\n' "${dirOfDistBundle:?}" "$USER" "${dirOfDistBundle:?}" \
+  && true
+
