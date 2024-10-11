@@ -14,8 +14,7 @@
 
 #define DATA_FILE_FIELD_SEP_CHR '\t'
 
-
-typedef  char  bool;
+typedef  int  bool;
 typedef  struct BulkLn  BulkLn;
 
 
@@ -59,7 +58,7 @@ struct BulkLn {
 
 
 static void printHelp(){
-    printf("  \n   %s%s\n", strrchr(__FILE__, '/') + 1, " @ " STR_QUOT(PROJECT_VERSION) "\n"
+    printf("  \n   %s @ " STR_QUOT(PROJECT_VERSION) "\n"
         "  \n"
         "  Takes paths (pairwise) from stdin (see --stdin for details) and\n"
         "  creates a hardlink for each pair from the 1st path to the 2nd.\n"
@@ -104,7 +103,7 @@ static void printHelp(){
         "  \n"
         "    --force\n"
         "        Same meaning as in original 'ln' command.\n"
-        "  \n");
+        "  \n", strrchr(__FILE__,'/')+1 );
 }
 
 
@@ -209,7 +208,7 @@ static int mkdirs( char*path, BulkLn*bulkLn ){
             err = mkdir(path, 0777);
             if( err ){
                 if( errno == EEXIST ){
-                    // Fine :) So just continue with the next one.
+                    /* Fine :) So just continue with the next one. */
                 }else{
                     fprintf(stderr, "mkdir(\"%s\"): %s\n", path, strerror(errno));
                     err = -1; goto finally;
@@ -244,7 +243,7 @@ finally:
 }
 
 
-/** Like:  ln -f srcPath dstPath  */
+/** Like:  ln srcPath dstPath  */
 static int createHardlink( char*srcPath, char*dstPath, BulkLn*bulkLn ){
     int err;
 
@@ -302,9 +301,9 @@ static int onPathPair( char*srcPath, char*dstPath, BulkLn*bulkLn ){
         tmpEnd[0] = '\0';
         /* Create missing parent dirs */
         err = mkdirs(dstPath, bulkLn);
-        if( err ){ err = -1; goto finally; }
         /* Restore path */
         tmpEnd[0] = '/';
+        if( err ){ err = -1; goto finally; }
     }
 
     err = createHardlink(srcPath, dstPath, bulkLn);
@@ -350,9 +349,9 @@ static int parseDataFileAsPairPerLine( BulkLn*bulkLn ){
                     bulkLn->dataFilePath, lineNum);
             err = -1; goto finally;
         }
-        char *unwantedTab = memchr(tab + 1, DATA_FILE_FIELD_SEP_CHR, buf_len - (tab - buf + 2));
+        char *unwantedTab = memchr(tab + 1, DATA_FILE_FIELD_SEP_CHR, buf_len - (tab + 1 - buf));
         if( unwantedTab != NULL ){
-            fprintf(stderr, "Too many field separators (tab) in '%s' @ %lu\n",
+            fprintf(stderr, "Too many field separators (tab) in '%s' line %lu\n",
                     bulkLn->dataFilePath, lineNum);
             err = -1; goto finally;
         }
@@ -424,7 +423,7 @@ finally:
     if( bulkLn->dataFd != NULL && bulkLn->dataFd != stdin ){
         fclose(bulkLn->dataFd);
     }
-    return err;
+    return -err;
     #undef bulkLn
 }
 
