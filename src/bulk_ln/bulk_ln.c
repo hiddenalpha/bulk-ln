@@ -350,7 +350,7 @@ static int parseDataFileAsPairPerLine( BulkLn*bulkLn ){
                     bulkLn->dataFilePath, lineNum);
             err = -1; goto finally;
         }
-        char *unwantedTab = memchr(tab + 1, DATA_FILE_FIELD_SEP_CHR, tab + 1 - buf);
+        char *unwantedTab = memchr(tab + 1, DATA_FILE_FIELD_SEP_CHR, buf_len - (tab - buf + 2));
         if( unwantedTab != NULL ){
             fprintf(stderr, "Too many field separators (tab) in '%s' @ %lu\n",
                     bulkLn->dataFilePath, lineNum);

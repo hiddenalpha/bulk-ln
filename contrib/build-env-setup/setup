@@ -27,6 +27,6 @@ true \
   && find . -not -wholename './dist*' -delete \
   && ${PKGDEL:?} $PKGS_TO_DEL && ${PKGCLEAN:?} \
   && dirOfDistBundle="$(realpath dist)" \
-  && printf '\n  SUCCESS  :)  Distribution bundle is ready in:\n\n  %s\n\n  Tip: Before pulling out your hair about how to get that archive out of\n       your qemu VM. STOP kluding around with silly tools and learn how\n       basic tools do the job perfectly fine:\n\n  ssh %s@localhost -p2222 -- sh -c '\''true && cd "%s" && tar c *'\'' | tar x\n\n  BTW: In addition bulk-ln got installed and is ready-to-use.\n\n' "${dirOfDistBundle:?}" "$USER" "${dirOfDistBundle:?}" \
+  && printf '\n  SUCCESS  :)  Distribution bundle is ready in:\n\n  %s\n\n  Tip: Before pulling out your hair about how to get that archive out of\n       your qemu VM. STOP kluding around with silly tools and learn how\n       basic tools do the job perfectly fine:\n\n  ssh %s@localhost -p%d -T '\''true && cd "%s" && tar c *'\'' | tar x\n\n  BTW: In addition bulk-ln got installed and is ready-to-use.\n\n' "${dirOfDistBundle:?}" "$USER" "$(env|grep SSH_CLIENT|cut -d' ' -f3)" "${dirOfDistBundle:?}" \
   && true
 
