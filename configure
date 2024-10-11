@@ -1,4 +1,4 @@
-
+#!/bin/sh
 set -e
 if test -n "$BASH_VERSION"; then set -o posix; fi
 
@@ -56,6 +56,7 @@ printMakefile () {
     printf '%s\n' '# when calling configure again.'
     printf '\n'
     printf '%s\n' 'CC=gcc'
+    printf '%s\n' 'LD=gcc'
     printf '%s\n' 'TAR=tar'
     printf '%s\n' 'MKDIRS=mkdir -p'
     printf '%s\n' 'RIMRAF=rm -rf'
@@ -64,7 +65,6 @@ printMakefile () {
     printf '%s\n' "EXEC_PREFIX=$exec_prefix"
     printf '%s\n' "EXEC_SUFFIX=$exec_suffix"
     printf '%s\n' "BINDIR=$bindir"
-    printf '%s\n' "NDEBUG=1"
 
     # If PROJECT_VERSION set, use it.
     # If not, try generate via git describe.
@@ -78,27 +78,9 @@ printMakefile () {
     printf '%s\n' ' echo "$$ret")'
 
     printf '\n'
-    printf '%s'   'CFLAGS= --std=c99'
-    printf '%s'   ' -Wall -Wextra -Werror -fmax-errors=3'
-    printf '%s'   ' -Wno-error=unused-function -Wno-error=unused-label'
-    printf '%s'   ' -Wno-error=unused-variable -Wno-error=unused-parameter'
-    printf '%s'   ' -Wno-error=unused-const-variable'
-    # Not supported by debian 9 and older
-    #printf '%s'   ' -Werror=implicit-fallthrough=1'
-    printf '%s'   ' -Wno-error=unused-but-set-variable'
-    printf '%s'   ' -Wno-unused-function -Wno-unused-parameter'
-    printf '%s\n' ' -DPROJECT_VERSION=$(PROJECT_VERSION)'
+    printf '%s'   'CFLAGS= --std=c99 -Wall -Wextra -Werror -Isrc/bulk_ln -Isrc/common -Os -DPROJECT_VERSION=$(PROJECT_VERSION)'
     printf '%s\n' ''
-    printf '%s\n' 'LDFLAGS= -Wl,--no-demangle,--fatal-warnings'
-    printf '%s\n' ''
-    printf '%s\n' 'INCDIRS= -Isrc/bulk_ln -Isrc/common'
-    printf '%s\n' ''
-    printf '%s\n' 'ifndef NDEBUG'
-    printf '%s\n' '	CFLAGS := $(CFLAGS) -ggdb -O0 -g3'
-    printf '%s\n' 'else'
-    printf '%s\n' '	CFLAGS := $(CFLAGS) -ffunction-sections -fdata-sections -Os "-DNDEBUG=1"'
-    printf '%s\n' '	LDFLAGS := $(LDFLAGS) -Wl,--gc-sections,--as-needed'
-    printf '%s\n' 'endif'
+    printf '%s\n' 'LDFLAGS= -Wl,--fatal-warnings,--gc-sections,--as-needed -s'
 
     if test "$verbose" = "0"; then
         printf '\n'
@@ -122,7 +104,7 @@ printMakefile () {
     printf '%s\n' 'build/obj/%.o: src/%.c'
     printf '%s\n' '	echo "  CC    $@"'
     printf '%s\n' '	$(MKDIRS) "$(shell T=$@; echo $${T%/*})"'
-    printf '%s\n' '	$(CC) -c -o $@ $^ $(CFLAGS) $(INCDIRS)'
+    printf '%s\n' '	$(CC) -c -o $@ $^ $(CFLAGS)'
 
     printf '\n'
     printf '%s'   'build/bin/bulk-ln$(EXEC_SUFFIX):'
@@ -132,7 +114,7 @@ printMakefile () {
     printf '\n'   # commands
     printf '%s\n' '	echo "  LN    $@"'
     printf '%s\n' '	$(MKDIRS) "$(shell T=$@; echo $${T%/*})"'
-    printf '%s\n' '	$(CC) -o $@ $(LDFLAGS) $^ $(LIBSDIR)'
+    printf '%s\n' '	$(LD) -o $@ $(LDFLAGS) $^'
 
     printf '\n'
     printf '%s\n' '.PHONY: dist'
